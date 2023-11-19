@@ -10,7 +10,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Billdlivekotlin"
-        tools:targetApi="31" >
+        android:allowAudioPlaybackCapture="true"
+        >
 
         <activity
             android:name=".MainActivity"
@@ -24,20 +25,22 @@
             </intent-filter>
         </activity>
         <service
-            android:name=".MainActivity"
-            android:foregroundServiceType="mediaPlayback"
-            android:exported="false">
+            android:name=".ScreenRecordingService">
         </service>
+
+        <service
+            android:name=".MediaProjectionService"
+            android:foregroundServiceType="mediaProjection" />
     </application>
 
-
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA"/>
-
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-
-
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
 </manifest>
