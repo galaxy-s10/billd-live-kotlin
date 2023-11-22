@@ -48,13 +48,10 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(this, ScreenRecordingService::class.java)
         intent.putExtra("resultData", data)
         intent.putExtra("resultCode", resultCode)
+        println("resultCoderesultCode---")
+        println(data)
+        println(resultCode)
         startForegroundService(intent)
-        println("startForegroundServicestartForegroundService")
-//        startService(MediaProjectionService.createIntent(this))
-//        mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, data!!)
-//        val audiorec = MyAudioRecorder()
-//        audiorec.startAudioCapture(mediaProjection!!,textview!!)
-
     }
 
     override fun onActivityReenter(resultCode: Int, data: Intent?) {
@@ -73,8 +70,7 @@ class MainActivity : ComponentActivity() {
         println("kkffffffff")
 
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        println("createScreenCaptureIntentcreateScreenCaptureIntent")
-        println(mediaProjectionManager)
+
         textview?.setOnClickListener{
             println("ddddddds===")
 
@@ -82,8 +78,6 @@ class MainActivity : ComponentActivity() {
             val REQUEST_CODE_SCREEN_CAPTURE = 1
             val screenCaptureIntent = mediaProjectionManager?.createScreenCaptureIntent()
             startActivityForResult(screenCaptureIntent!!, REQUEST_CODE_SCREEN_CAPTURE)
-//            mediaProjectionLauncher.launch(screenCaptureIntent)
-           // audiorec.startAudioCapture(mediaProjection!!)
 
         }
         setContentView(textview)
