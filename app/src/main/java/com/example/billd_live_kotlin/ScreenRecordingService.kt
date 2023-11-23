@@ -9,10 +9,13 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.hardware.display.DisplayManager
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioPlaybackCaptureConfiguration
 import android.media.AudioRecord
+import android.media.MediaRecorder
+import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Environment
@@ -28,13 +31,18 @@ import kotlin.concurrent.timerTask
 
 class ScreenRecordingService : Service() {
     private  var audioRecord: AudioRecord? = null
-//    val mSampleRateInHZ = 16000
+    private  var mediaRecorder: MediaRecorder = MediaRecorder()
+
+    //    val mSampleRateInHZ = 16000
     val mSampleRateInHZ = 44100
     val channelData = AudioFormat.CHANNEL_IN_MONO
     val bitData = AudioFormat.ENCODING_PCM_16BIT
-
-
     var minBufferSize=0
+    var mediaProjection: MediaProjection? = null
+    var notificationId:Int = 1
+    var notification:Notification?=null
+    var duration =4000L
+
 
     override fun onCreate() {
         println("----onCreate")
@@ -59,15 +67,14 @@ class ScreenRecordingService : Service() {
         channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC //设置锁屏可见 VISIBILITY_PUBLIC=可见
         manager.createNotificationChannel(channel)
         builder = Notification.Builder(this, channelID)
-        val notification = builder.setAutoCancel(false)
+          notification = builder.setAutoCancel(false)
             .setContentTitle("5555") //标题
             .setContentText("666666666...") //内容
             .setWhen(System.currentTimeMillis())
             .setSmallIcon(R.mipmap.ic_launcher) //设置小图标
             .setLargeIcon(BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher))//设置大图标
             .build()
-        startForeground(1, notification)
-        println("startForegroundstartForeground")
+        startForeground(notificationId, notification)
     }
 
 
@@ -77,23 +84,20 @@ class ScreenRecordingService : Service() {
     @RequiresApi(Build.VERSION_CODES.Q)
     @SuppressLint("ServiceCast", "MissingPermission")
     private fun initAudioRecord(resultCode: Int, intent: Intent) {
-        println("initAudioRecordinitAudioRecord")
-//        return
         minBufferSize = AudioRecord.getMinBufferSize(mSampleRateInHZ, channelData, bitData)
         val mediaProjectionManager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         //设置应用程序录制系统音频的能力
-        val mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, intent)
+          mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, intent)
         //数据编码方式
         val format = AudioFormat.Builder()
             .setEncoding(bitData)
             .setSampleRate(mSampleRateInHZ)
             .setChannelMask(channelData)
             .build()
-        val config = AudioPlaybackCaptureConfiguration.Builder(mediaProjection)
+        val config = AudioPlaybackCaptureConfiguration.Builder(mediaProjection!!)
             .addMatchingUsage(AudioAttributes.USAGE_MEDIA) //设置捕获多媒体音频
-//            .addMatchingUsage(AudioAttributes.USAGE_GAME) //设置捕获游戏音频
+            .addMatchingUsage(AudioAttributes.USAGE_GAME) //设置捕获游戏音频
             .build()
-        println("ddddddsdsd")
         audioRecord = AudioRecord.Builder()
             .setAudioFormat(format)
             .setAudioPlaybackCaptureConfig(config)
@@ -101,6 +105,49 @@ class ScreenRecordingService : Service() {
             .build()
         //做完准备工作，就可以开始录音了
         startRecord()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    @SuppressLint("ServiceCast", "MissingPermission", "WrongConstant")
+    private fun initVideoRecord(resultCode: Int, intent: Intent) {
+        val mediaProjectionManager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        //设置应用程序录制系统音频的能力
+          mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, intent)
+        val dirPath = Environment.getExternalStorageDirectory().path
+        //保存到本地录音文件名
+        val videoFilePath= "$dirPath/Movies/vvv.mp4"
+         createFile(videoFilePath)
+        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+        mediaRecorder.setVideoEncodingBitRate(1024 * 1000)
+        mediaRecorder.setVideoFrameRate(30)
+        mediaRecorder.setVideoSize(1280, 720)
+        mediaRecorder.setOutputFile(videoFilePath)
+        mediaRecorder.prepare()
+        mediaProjection!!.createVirtualDisplay(
+            "ScreenRecording",
+            1280,
+            720,
+            resources.displayMetrics.densityDpi,
+            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+            mediaRecorder.surface,
+            null,
+            null
+        )
+        mediaRecorder.start()
+        val timer = Timer()
+        timer.schedule(timerTask {
+            // 在此处编写延迟执行的任务逻辑
+            println("延迟任务执行于")
+            mediaRecorder.stop()
+            mediaRecorder.reset()
+            mediaProjection!!.stop()
+            stopForeground(notificationId)
+
+            timer.cancel() // 取消定时器
+        }, duration) // 三秒后执行，单位为毫秒
+
     }
 
     private fun createFile(name: String): File? {
@@ -132,6 +179,7 @@ class ScreenRecordingService : Service() {
      * 开始录音
      */
     private fun startRecord() {
+        println("开始录音开始录音")
         //承接音频数据的字节数组
         val mAudioData = ByteArray(320)
         //保存到本地录音文件名
@@ -149,14 +197,12 @@ class ScreenRecordingService : Service() {
             println("延迟任务执行于")
             recing=false
             timer.cancel() // 取消定时器
-        }, 10000L) // 三秒后执行，单位为毫秒
+        }, duration) // 三秒后执行，单位为毫秒
+        println("线程起来了")
+//        return
         Thread {
             try {
                 val outputStream = FileOutputStream(tmpFile?.absoluteFile)
-                val channels = 1 // 声道数
-                val bitDepth = 16 // 位深度
-//                val converter = PcmToWavConverter()
-
                 while (recing) {
                     //循环从音频硬件读取音频数据录制到字节数组中
                     audioRecord?.read(mAudioData, 0, mAudioData.size)
@@ -165,8 +211,10 @@ class ScreenRecordingService : Service() {
 //                  println("----<<<${recing}")
                 }
                 PcmToWavUtil(mSampleRateInHZ,channelData,bitData).pcmToWav(tmpFile!!.absolutePath, tmpOutFile!!.absolutePath)
-//                converter.pcmToWave(tmpFile!!.absolutePath, tmpOutFile!!.absolutePath, mSampleRateInHZ, channels, bitDepth, minBufferSize)
                 audioRecord?.stop()
+                mediaProjection!!.stop()
+                val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.cancel(notificationId)
                 outputStream.close()
 
                 timer.cancel() // 取消定时器
@@ -181,15 +229,19 @@ class ScreenRecordingService : Service() {
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         println("----onStartCommand")
-        initNotification()
         val currentResultCode = intent.getIntExtra("resultCode", 0)
 //        val currentResultData = intent.getIntExtra("resultData", null)
         val currentResultData = intent.getParcelableExtra<Intent>("resultData")
         if(currentResultData!=null){
             println("初始化录屏")
+            initNotification()
             initAudioRecord(currentResultCode, currentResultData)
+            initVideoRecord(currentResultCode, currentResultData)
+
+
         }else{
         println("取消录屏了")
+            stopForeground(true)
         }
         return super.onStartCommand(intent, flags, startId)
     }

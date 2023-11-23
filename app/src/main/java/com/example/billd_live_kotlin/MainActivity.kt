@@ -10,6 +10,9 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
@@ -27,11 +30,13 @@ class MainActivity : ComponentActivity() {
     var mediaRecorder: MediaRecorder? =null
     fun checkScreenRecordPermission() {
         println("checkScreenRecordPermission")
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), RECORD_REQUEST_CODE)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), RECORD_REQUEST_CODE)
+            println("没有有录音权限")
+
         } else {
             // 权限已授予，可以读取文件
-            println("可以读取文件")
+            println("有录音权限")
         }
     }
 
@@ -44,14 +49,19 @@ class MainActivity : ComponentActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         println("onActivityResult---")
-
         val intent = Intent(this, ScreenRecordingService::class.java)
         intent.putExtra("resultData", data)
         intent.putExtra("resultCode", resultCode)
-        println("resultCoderesultCode---")
+        println("resultCoderesultCode6666")
         println(data)
         println(resultCode)
-        startForegroundService(intent)
+        if(data!=null){
+            startForegroundService(intent)
+            println("用户点了确定666")
+
+        }else{
+            println("用户点了取消666")
+        }
     }
 
     override fun onActivityReenter(resultCode: Int, data: Intent?) {
@@ -65,22 +75,45 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         println("---onCreate")
-        textview = TextView(this)
-        textview?.text = "helloss billd"
-        println("kkffffffff")
+        val linearLayout = LinearLayout(this)
+        linearLayout.orientation = LinearLayout.VERTICAL
+        linearLayout.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
 
-        mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-
-        textview?.setOnClickListener{
+        // 创建并添加按钮1
+        val button1 = Button(this)
+        button1.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        button1.text = "录屏"
+        button1.setOnClickListener {
+            // 处理按钮1的点击事件
             println("ddddddds===")
 
             checkScreenRecordPermission()
             val REQUEST_CODE_SCREEN_CAPTURE = 1
             val screenCaptureIntent = mediaProjectionManager?.createScreenCaptureIntent()
             startActivityForResult(screenCaptureIntent!!, REQUEST_CODE_SCREEN_CAPTURE)
-
         }
-        setContentView(textview)
+        linearLayout.addView(button1)
+
+        // 创建并添加按钮2
+        val button2 = Button(this)
+        button2.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        button2.text = "播放"
+        button2.setOnClickListener {
+            println("333333")
+        }
+        linearLayout.addView(button2)
+
+        mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        setContentView(linearLayout)
         //setContentView(R.layout.billd_layout_one)
     }
 }
