@@ -18,20 +18,39 @@ import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
+import retrofit2.awaitResponse
+import java.net.SocketTimeoutException
 
 
 class MainActivity : ComponentActivity() {
     private val REQUEST_CODE = 100
     private var mProjectionManager: MediaProjectionManager? = null
     private val RECORD_REQUEST_CODE = 129
-    var textview: TextView?=null
-    var mediaProjectionManager : MediaProjectionManager? = null
+    var textview: TextView? = null
+    var mediaProjectionManager: MediaProjectionManager? = null
     var mediaProjection: MediaProjection? = null
-    var mediaRecorder: MediaRecorder? =null
+    var mediaRecorder: MediaRecorder? = null
     fun checkScreenRecordPermission() {
         println("checkScreenRecordPermission")
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), RECORD_REQUEST_CODE)
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                RECORD_REQUEST_CODE
+            )
             println("没有有录音权限")
 
         } else {
@@ -55,11 +74,11 @@ class MainActivity : ComponentActivity() {
         println("resultCoderesultCode6666")
         println(data)
         println(resultCode)
-        if(data!=null){
+        if (data != null) {
             startForegroundService(intent)
             println("用户点了确定666")
 
-        }else{
+        } else {
             println("用户点了取消666")
         }
     }
@@ -82,6 +101,35 @@ class MainActivity : ComponentActivity() {
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
 
+        suspend fun getdata() {
+            return coroutineScope {
+                try {
+//                    val call = BilldApi().live.getLiveList()
+                    val gson = Gson()
+                    val params = HashMap<String, Any>()
+                    params["id"] = 101
+                    params["password"] = "1234567"
+                    val json = gson.toJson(params)
+                    val requestBody =
+                        RequestBody.create("application/json".toMediaTypeOrNull(), json)
+                    val loginres = BilldApi().user.login(requestBody)
+                    val response = loginres.awaitResponse()
+                    if (response.isSuccessful) {
+                        println(response.body())
+                        println("isSuccessfulisSuccessful")
+                        val loginres = BilldApi().user.login(requestBody)
+                        val response = loginres.awaitResponse()
+                    } else {
+                        println("返回code不是200")
+                        println(response.errorBody()?.string())
+                    }
+                } catch (e: SocketTimeoutException) {
+                    println("错误")
+                    println(e)
+                }
+            }
+        }
+
         // 创建并添加按钮1
         val button1 = Button(this)
         button1.layoutParams = LinearLayout.LayoutParams(
@@ -92,11 +140,25 @@ class MainActivity : ComponentActivity() {
         button1.setOnClickListener {
             // 处理按钮1的点击事件
             println("ddddddds===")
+//            val call = BilldApi().live.getLiveList()
+            GlobalScope.launch(Dispatchers.Main) {
+//                val response = withContext(Dispatchers.IO) {
+//                    val response = call.execute()
+//                    println("---")
+//                    println(response.body())
+//                }
+//                println("Response: $response")
+                getdata()
+            }
 
-            checkScreenRecordPermission()
-            val REQUEST_CODE_SCREEN_CAPTURE = 1
-            val screenCaptureIntent = mediaProjectionManager?.createScreenCaptureIntent()
-            startActivityForResult(screenCaptureIntent!!, REQUEST_CODE_SCREEN_CAPTURE)
+            println("9999")
+
+
+//            MyWebrtc(applicationContext);
+//            checkScreenRecordPermission()
+//            val REQUEST_CODE_SCREEN_CAPTURE = 1
+//            val screenCaptureIntent = mediaProjectionManager?.createScreenCaptureIntent()
+//            startActivityForResult(screenCaptureIntent!!, REQUEST_CODE_SCREEN_CAPTURE)
         }
         linearLayout.addView(button1)
 
@@ -112,7 +174,8 @@ class MainActivity : ComponentActivity() {
         }
         linearLayout.addView(button2)
 
-        mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        mediaProjectionManager =
+            getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         setContentView(linearLayout)
         //setContentView(R.layout.billd_layout_one)
     }

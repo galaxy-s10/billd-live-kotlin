@@ -41,7 +41,7 @@ class ScreenRecordingService : Service() {
     var mediaProjection: MediaProjection? = null
     var notificationId:Int = 1
     var notification:Notification?=null
-    var duration =4000L
+    var duration =6000L
 
 
     override fun onCreate() {
