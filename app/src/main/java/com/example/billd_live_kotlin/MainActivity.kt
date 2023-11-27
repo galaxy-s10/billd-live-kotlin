@@ -10,14 +10,16 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -29,9 +31,14 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import retrofit2.awaitResponse
 import java.net.SocketTimeoutException
+import androidx.navigation.ui.AppBarConfiguration
 
+import androidx.navigation.findNavController
+import androidx.navigation.ui.setupWithNavController
+import androidx.navigation.ui.setupActionBarWithNavController
+import com.example.billd_live_kotlin.databinding.BilldLayoutOneBinding
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 100
     private var mProjectionManager: MediaProjectionManager? = null
     private val RECORD_REQUEST_CODE = 129
@@ -39,17 +46,17 @@ class MainActivity : ComponentActivity() {
     var mediaProjectionManager: MediaProjectionManager? = null
     var mediaProjection: MediaProjection? = null
     var mediaRecorder: MediaRecorder? = null
+
+    private lateinit var binding: BilldLayoutOneBinding
+
     fun checkScreenRecordPermission() {
         println("checkScreenRecordPermission")
         if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECORD_AUDIO
+                this, Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.RECORD_AUDIO),
-                RECORD_REQUEST_CODE
+                this, arrayOf(Manifest.permission.RECORD_AUDIO), RECORD_REQUEST_CODE
             )
             println("没有有录音权限")
 
@@ -64,8 +71,27 @@ class MainActivity : ComponentActivity() {
         super.onStart()
     }
 
+//    @RequiresApi(Build.VERSION_CODES.Q)
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//        println("onActivityResult---")
+//        val intent = Intent(this, ScreenRecordingService::class.java)
+//        intent.putExtra("resultData", data)
+//        intent.putExtra("resultCode", resultCode)
+//        println("resultCoderesultCode6666")
+//        println(data)
+//        println(resultCode)
+//        if (data != null) {
+//            startForegroundService(intent)
+//            println("用户点了确定666")
+//
+//        } else {
+//            println("用户点了取消666")
+//        }
+//    }
+
     @RequiresApi(Build.VERSION_CODES.Q)
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+      fun onActivityResult2(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         println("onActivityResult---")
         val intent = Intent(this, ScreenRecordingService::class.java)
@@ -88,17 +114,36 @@ class MainActivity : ComponentActivity() {
         println("onActivityReenter---")
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        binding = BilldLayoutOneBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val navView: BottomNavigationView = binding.navView
+
+        val navController = findNavController(R.id.nav_host_fragment_activity_main)
+        // Passing each menu ID as a set of Ids because each
+        // menu should be considered as top level destinations.
+        val appBarConfiguration = AppBarConfiguration(
+            setOf(
+                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications
+            )
+        )
+        setupActionBarWithNavController(navController, appBarConfiguration)
+        navView.setupWithNavController(navController)
+    }
+
     @RequiresApi(Build.VERSION_CODES.Q)
     @SuppressLint("WrongConstant")
-    override fun onCreate(savedInstanceState: Bundle?) {
+    fun onCreate2(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         println("---onCreate")
         val linearLayout = LinearLayout(this)
         linearLayout.orientation = LinearLayout.VERTICAL
         linearLayout.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
 
         suspend fun getdata() {
@@ -133,8 +178,7 @@ class MainActivity : ComponentActivity() {
         // 创建并添加按钮1
         val button1 = Button(this)
         button1.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
         button1.text = "录屏"
         button1.setOnClickListener {
@@ -165,8 +209,7 @@ class MainActivity : ComponentActivity() {
         // 创建并添加按钮2
         val button2 = Button(this)
         button2.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
         button2.text = "播放"
         button2.setOnClickListener {
@@ -176,7 +219,7 @@ class MainActivity : ComponentActivity() {
 
         mediaProjectionManager =
             getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        setContentView(linearLayout)
-        //setContentView(R.layout.billd_layout_one)
+//        setContentView(linearLayout)
+        setContentView(R.layout.billd_layout_one)
     }
 }
