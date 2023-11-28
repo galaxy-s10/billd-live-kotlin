@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.billd_live_kotlin.databinding.FragmentHomeBinding
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class HomeFragment : Fragment() {
 
@@ -29,8 +30,15 @@ class HomeFragment : Fragment() {
         val root: View = binding.root
 
         val textView: TextView = binding.textHome
+
         homeViewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
+            println("dddd")
+            println(textView.text)
+            println(textView)
+            println(it)
+//            val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+
         }
         return root
     }

@@ -10,6 +10,7 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
+import android.view.Menu
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -18,6 +19,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
 
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.gson.Gson
@@ -37,6 +39,7 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.example.billd_live_kotlin.databinding.BilldLayoutOneBinding
+import com.google.android.material.bottomnavigation.BottomNavigationMenuView
 
 class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE = 100
@@ -91,7 +94,7 @@ class MainActivity : AppCompatActivity() {
 //    }
 
     @RequiresApi(Build.VERSION_CODES.Q)
-      fun onActivityResult2(requestCode: Int, resultCode: Int, data: Intent?) {
+    fun onActivityResult2(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         println("onActivityResult---")
         val intent = Intent(this, ScreenRecordingService::class.java)
@@ -121,13 +124,58 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val navView: BottomNavigationView = binding.navView
+        navView.itemIconTintList = null //切换不同图片时需要设置itemIconTintList为null
 
         val navController = findNavController(R.id.nav_host_fragment_activity_main)
+        val menu = navView.menu
+
+//        val destinationChangedListener =
+//            NavController.OnDestinationChangedListener { controller, destination, arg ->
+//                // 处理目标改变事件
+//                when (destination.id) {
+//                    R.id.navigation_home -> {
+//                        println("点了home")
+//                        for (i in 0 until menu.size()) {
+//                            val menuItem = menu.getItem(i)
+//                            if (menuItem.itemId == destination.id) {
+//                                // 找到了当前目标项
+////                                val currentIndex = i
+//                                // 在这里进行相应的操作，例如修改图标
+//                                if(menuItem.isChecked){
+//                                    menuItem.setIcon(R.drawable.area_active)
+//
+//                                }else{
+//                                    menuItem.setIcon(R.drawable.home)
+//
+//                                }
+//                                break
+//                            }else{
+//                                menuItem.setIcon(R.drawable.home)
+//                            }
+//                        }
+////                        val home = findViewById<BottomNavigationMenuView>(R.id.navigation_home)
+////                        val item = navView.menu.getItem(destination.id)
+////                        item.setIcon(R.drawable.area_active)
+//                    }
+//
+//                    R.id.navigation_dashboard -> {
+//                        println("点了dashboadd")
+//                    }
+//                    // 添加其他目标的处理逻辑
+//                    else -> {
+//                        // 默认处理逻辑
+//                        println("点了其他")
+//
+//                    }
+//                }
+//            }
+//
+//        navController.addOnDestinationChangedListener(destinationChangedListener)
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         val appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications
+                R.id.navigation_home, R.id.navigation_user, R.id.navigation_notifications
             )
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
